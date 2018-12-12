@@ -97,26 +97,35 @@ def tank(x, y, TurrPos):
     for i in range(1, int(tank_width / (2 * wheel_radius))):
         pygame.draw.circle(gameDisplay, black, (int((x - (tank_width / 2)) + 2 * wheel_radius * i), y + tank_hight),
                            wheel_radius)
+
+    pygame.draw.circle(gameDisplay, green, possibleTurrets[8], 3)
     pygame.display.update()
 
 
+def fire(posTurr_x, posTurr_y):
 
-def fire():
-    a = 1
+    x0 = posTurr_x
+    y0 = posTurr_y
+    Vx = 9.3
+    Vy = 20
+    a = 0.7
+    t = 0
     fireShot = True
-    x = 0
-    a = 1
 
     while fireShot:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
 
-        y = x
-        x += 1
-        if y <= 538:
-            pygame.draw.circle(gameDisplay, red, (x,y), 1)
-        elif x > 400:
-            fireShot = False
+        t += (1 / 100)
+        x = int(x0 + Vx * t)
+        y = int(y0 - Vy * t + ((a*(t**2))/2))
+        pygame.draw.circle(gameDisplay, red, (x, y), 1)
         pygame.display.update()
-        clock.tick(100)
+        if x>= display_width or y >= display_height:
+            fireShot = False
+
 
 def obstacles(y):
     pygame.draw.rect(gameDisplay, black, (0, int(y + tank_hight + (wheel_radius/2)), display_width, int(display_height-(y + tank_hight + (wheel_radius/2)))))
@@ -182,7 +191,7 @@ def game_loop():
                     pause()
 
                 elif event.key == pygame.K_SPACE:
-                    fire()
+                    fire(tank_x, tank_y)
 
             elif event.type == pygame.KEYUP:
 
