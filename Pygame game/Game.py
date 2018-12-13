@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 
 pygame.init()
 
@@ -17,17 +18,19 @@ black = (0, 0, 0)
 red = (255, 0, 0)
 green = (34, 177, 76)
 orange = (255, 100, 0)
+rand_colour = (random.randrange(0,256), random.randrange(0,256), random.randrange(0,256))
 
 # font types
-smallfont = pygame.font.SysFont("comicsansm", 25)
-medfont = pygame.font.SysFont("comicsansm", 50)
-largefont = pygame.font.SysFont("comicsansm", 80)
+smallfont = pygame.font.SysFont("comicsansms", 25)
+medfont = pygame.font.SysFont("comicsansms", 50)
+largefont = pygame.font.SysFont("comicsansms", 80)
 
 # tank data
 tank_hight = 20
 tank_width = 40
 wheel_radius = 4
 turret_width = 4
+
 
 # obstacles
 wall_thickness = 140
@@ -79,40 +82,39 @@ def pause():
                     quit()
 
 
-def tank(x, y, TurrPos):
-    possibleTurrets = [(x + 27, y - 2),
-                       (x + 26, y - 5),
-                       (x + 25, y - 8),
-                       (x + 23, y - 12),
-                       (x + 20, y - 14),
-                       (x + 18, y - 15),
-                       (x + 15, y - 17),
-                       (x + 13, y - 19),
-                       (x + 11, y - 21)
-                       ]
-
-    pygame.draw.circle(gameDisplay, black, (x, y), int(tank_hight / 2))
-    pygame.draw.rect(gameDisplay, black, (int(x - (tank_width / 2)), y, tank_width, tank_hight))
-    pygame.draw.line(gameDisplay, black, (x, y), possibleTurrets[TurrPos], turret_width)
+def tank(x, y):
+    pygame.draw.circle(gameDisplay, rand_colour, (x, y), int(tank_hight / 2))
+    pygame.draw.rect(gameDisplay, rand_colour, (int(x - (tank_width / 2)), y, tank_width, tank_hight))
     for i in range(1, int(tank_width / (2 * wheel_radius))):
-        pygame.draw.circle(gameDisplay, black, (int((x - (tank_width / 2)) + 2 * wheel_radius * i), y + tank_hight),
+        pygame.draw.circle(gameDisplay, rand_colour, (int((x - (tank_width / 2)) + 2 * wheel_radius * i), y + tank_hight),
                            wheel_radius)
 
-    pygame.draw.circle(gameDisplay, green, possibleTurrets[8], 3)
     pygame.display.update()
 
 
-def fire(posTurr_x, posTurr_y):
-    x0 = posTurr_x
-    y0 = posTurr_y
+def turret_position(x, y, beta):
+    alfa = (beta / 180) * math.pi
+    L = 25
+    Lx = L * math.cos(alfa)
+    Ly = L * math.sin(alfa)
+    x1 = Lx + x
+    y1 = y - Ly
+
+    pygame.draw.line(gameDisplay, black, (x, y), (x1, y1), 5)
+    pygame.display.update()
+
+    return x1, y1, beta
+
+
+def fire(x, y, z):
+    x1, y1, beta = turret_position(x, y, z)
     t = 0
 
-    beta = 80
     alfa = (beta / 180) * math.pi
-    V = 30
+    V = 40
     Vx = V * math.cos(alfa)
     Vy = V * math.sin(alfa)
-    a = 1
+    a = 2
 
     fireShot = True
 
@@ -121,16 +123,24 @@ def fire(posTurr_x, posTurr_y):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    pause()
+                    pygame.time.delay(1000)
+
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    quit()
 
         t += (1 / 100)
-        x = int(x0 + Vx * t)
-        y = int(y0 - Vy * t + ((a * (t ** 2)) / 2))
-        pygame.draw.circle(gameDisplay, red, (x, y), 1)
+        x2 = int(x1 + Vx * t)
+        y2 = int(y1 - Vy * t + ((a * (t ** 2)) / 2))
+        pygame.draw.circle(gameDisplay, red, (x2, y2), 4)
         pygame.display.update()
-        if x > int(display_width*1.1):
+        if x2 > display_width or x2 < 0:
             fireShot = False
-        elif y > int(y0 + tank_hight + (wheel_radius / 2)):
-            pygame.time.delay(1000)
+        if y2 > int(y + tank_hight + (wheel_radius / 2)):
+            pygame.time.delay(0)
             fireShot = False
 
 
@@ -168,7 +178,7 @@ def game_loop():
     tank_x = int(display_width * 0.1)
     tank_y = int(display_height * 0.9)
     tank_move = 0
-    TurrPos = 0
+    TurrPos = 60
     currTurrPos = 0
 
     gameExit = False
@@ -192,17 +202,16 @@ def game_loop():
                     tank_move = 5
 
                 elif event.key == pygame.K_UP:
-                    currTurrPos = 1
+                    currTurrPos = 10
 
                 elif event.key == pygame.K_DOWN:
-                    currTurrPos = -1
+                    currTurrPos = -10
 
                 elif event.key == pygame.K_p:
                     pause()
 
                 elif event.key == pygame.K_SPACE:
-                    fire(tank_x, tank_y)
-
+                    fire(tank_x, tank_y, TurrPos)
             elif event.type == pygame.KEYUP:
 
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -216,8 +225,8 @@ def game_loop():
         tank_x += tank_move
         TurrPos += currTurrPos
 
-        if TurrPos >= 8:
-            TurrPos = 8
+        if TurrPos >= 180:
+            TurrPos = 180
         elif TurrPos <= 0:
             TurrPos = 0
         if tank_x >= int(display_width / 2 - wall_thickness / 2 - tank_width / 2):
@@ -225,8 +234,8 @@ def game_loop():
         elif tank_x <= int(0 + (tank_width / 2)):
             tank_x = int(0 + (tank_width / 2))
 
-        tank(tank_x, tank_y, TurrPos)
-
+        tank(tank_x, tank_y)
+        turret_position(tank_x, tank_y, TurrPos)
         pygame.display.update()
         clock.tick(30)
 
