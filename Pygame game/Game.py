@@ -1,4 +1,5 @@
 import pygame
+import math
 
 pygame.init()
 
@@ -30,8 +31,7 @@ turret_width = 4
 
 # obstacles
 wall_thickness = 140
-wall_hight = display_height*0.4
-
+wall_hight = display_height * 0.4
 
 
 def text_objects(text, color, size="small"):
@@ -103,13 +103,17 @@ def tank(x, y, TurrPos):
 
 
 def fire(posTurr_x, posTurr_y):
-
     x0 = posTurr_x
     y0 = posTurr_y
-    Vx = 9.3
-    Vy = 20
-    a = 0.7
     t = 0
+
+    beta = 80
+    alfa = (beta / 180) * math.pi
+    V = 30
+    Vx = V * math.cos(alfa)
+    Vy = V * math.sin(alfa)
+    a = 1
+
     fireShot = True
 
     while fireShot:
@@ -120,16 +124,22 @@ def fire(posTurr_x, posTurr_y):
 
         t += (1 / 100)
         x = int(x0 + Vx * t)
-        y = int(y0 - Vy * t + ((a*(t**2))/2))
+        y = int(y0 - Vy * t + ((a * (t ** 2)) / 2))
         pygame.draw.circle(gameDisplay, red, (x, y), 1)
         pygame.display.update()
-        if x>= display_width or y >= display_height:
+        if x > int(display_width*1.1):
+            fireShot = False
+        elif y > int(y0 + tank_hight + (wheel_radius / 2)):
+            pygame.time.delay(1000)
             fireShot = False
 
 
 def obstacles(y):
-    pygame.draw.rect(gameDisplay, black, (0, int(y + tank_hight + (wheel_radius/2)), display_width, int(display_height-(y + tank_hight + (wheel_radius/2)))))
-    pygame.draw.rect(gameDisplay, black, (int((display_width/2)-(wall_thickness/2)), int(display_height-wall_hight-(display_height-y-tank_hight-(wheel_radius/2))), wall_thickness, wall_hight))
+    pygame.draw.rect(gameDisplay, black, (0, int(y + tank_hight + (wheel_radius / 2)), display_width,
+                                          int(display_height - (y + tank_hight + (wheel_radius / 2)))))
+    pygame.draw.rect(gameDisplay, black, (int((display_width / 2) - (wall_thickness / 2)), int(
+        display_height - wall_hight - (display_height - y - tank_hight - (wheel_radius / 2))), wall_thickness,
+                                          wall_hight))
 
 
 def game_intro():
@@ -201,7 +211,6 @@ def game_loop():
                 if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     currTurrPos = 0
 
-
         gameDisplay.fill(white)
         obstacles(tank_y)
         tank_x += tank_move
@@ -211,10 +220,10 @@ def game_loop():
             TurrPos = 8
         elif TurrPos <= 0:
             TurrPos = 0
-        if tank_x >= int(display_width/2-wall_thickness/2 - tank_width/2):
-            tank_x = int(display_width/2-wall_thickness/2 - tank_width/2)
-        elif tank_x <= int(0 + (tank_width/2)):
-            tank_x = int(0 + (tank_width/2))
+        if tank_x >= int(display_width / 2 - wall_thickness / 2 - tank_width / 2):
+            tank_x = int(display_width / 2 - wall_thickness / 2 - tank_width / 2)
+        elif tank_x <= int(0 + (tank_width / 2)):
+            tank_x = int(0 + (tank_width / 2))
 
         tank(tank_x, tank_y, TurrPos)
 
