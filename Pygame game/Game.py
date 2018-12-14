@@ -7,7 +7,7 @@ pygame.init()
 clock = pygame.time.Clock()
 
 # display
-display_width = 820
+display_width = 800
 display_height = 600
 gameDisplay = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption('TANKS')
@@ -15,10 +15,12 @@ pygame.display.set_caption('TANKS')
 # colours
 white = (255, 255, 225)
 black = (0, 0, 0)
+grey = (25, 25, 25)
 red = (255, 0, 0)
-green = (34, 177, 76)
+green = (0, 155, 0)
 orange = (255, 100, 0)
-rand_colour = (random.randrange(0,256), random.randrange(0,256), random.randrange(0,256))
+blue = (0, 0, 255)
+rand_colour = (random.randrange(0, 256), random.randrange(0, 256), random.randrange(0, 256))
 
 # font types
 smallfont = pygame.font.SysFont("comicsansms", 25)
@@ -30,7 +32,6 @@ tank_hight = 20
 tank_width = 40
 wheel_radius = 4
 turret_width = 4
-
 
 # obstacles
 wall_thickness = 140
@@ -52,6 +53,13 @@ def message_to_screen(msg, color, y_displace=0, size="small"):
     textSurf, textRect = text_objects(msg, color, size)
     textRect.center = (int(display_width / 2), int(display_height / 2) + y_displace)
     gameDisplay.blit(textSurf, textRect)
+
+
+def fading_display():
+    dy = int((display_height)/255)
+    for i in range(130):
+        colour = (0, i, 0)
+        pygame.draw.rect(gameDisplay, colour, (0, int((i*dy)), display_width, display_height - i*dy))
 
 
 def pause():
@@ -83,10 +91,11 @@ def pause():
 
 
 def tank(x, y):
-    pygame.draw.circle(gameDisplay, rand_colour, (x, y), int(tank_hight / 2))
-    pygame.draw.rect(gameDisplay, rand_colour, (int(x - (tank_width / 2)), y, tank_width, tank_hight))
+    pygame.draw.circle(gameDisplay, black, (x, y), int(tank_hight / 2))
+    pygame.draw.rect(gameDisplay, black, (int(x - (tank_width / 2)), y, tank_width, tank_hight))
     for i in range(1, int(tank_width / (2 * wheel_radius))):
-        pygame.draw.circle(gameDisplay, rand_colour, (int((x - (tank_width / 2)) + 2 * wheel_radius * i), y + tank_hight),
+        pygame.draw.circle(gameDisplay, black,
+                           (int((x - (tank_width / 2)) + 2 * wheel_radius * i), y + tank_hight),
                            wheel_radius)
 
     pygame.display.update()
@@ -119,23 +128,23 @@ def fire(x, y, z):
     fireShot = True
 
     while fireShot:
+
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    pause()
-                    pygame.time.delay(1000)
 
-                elif event.key == pygame.K_q:
+            if event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_q:
                     pygame.quit()
                     quit()
 
         t += (1 / 100)
         x2 = int(x1 + Vx * t)
         y2 = int(y1 - Vy * t + ((a * (t ** 2)) / 2))
-        pygame.draw.circle(gameDisplay, red, (x2, y2), 4)
+        pygame.draw.circle(gameDisplay, black, (x2, y2), 1)
         pygame.display.update()
         if x2 > display_width or x2 < 0:
             fireShot = False
@@ -145,17 +154,17 @@ def fire(x, y, z):
 
 
 def obstacles(y):
-    pygame.draw.rect(gameDisplay, black, (0, int(y + tank_hight + (wheel_radius / 2)), display_width,
+    pygame.draw.rect(gameDisplay, grey, (0, int(y + tank_hight + (wheel_radius / 2)), display_width,
                                           int(display_height - (y + tank_hight + (wheel_radius / 2)))))
-    pygame.draw.rect(gameDisplay, black, (int((display_width / 2) - (wall_thickness / 2)), int(
+    pygame.draw.rect(gameDisplay, grey, (int((display_width / 2) - (wall_thickness / 2)), int(
         display_height - wall_hight - (display_height - y - tank_hight - (wheel_radius / 2))), wall_thickness,
                                           wall_hight))
 
 
 def game_intro():
-    gameDisplay.fill(white)
+    gameDisplay.fill(black)
     message_to_screen("Welcome to TANKS!", green, -100, 'large')
-    message_to_screen("Press S to start, P to pause or Q to quit", black, 100)
+    message_to_screen("Press S to start, P to pause or Q to quit", white, 100)
     pygame.display.update()
 
     intro = True
@@ -202,10 +211,10 @@ def game_loop():
                     tank_move = 5
 
                 elif event.key == pygame.K_UP:
-                    currTurrPos = 10
+                    currTurrPos = 1
 
                 elif event.key == pygame.K_DOWN:
-                    currTurrPos = -10
+                    currTurrPos = -1
 
                 elif event.key == pygame.K_p:
                     pause()
@@ -220,7 +229,8 @@ def game_loop():
                 if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     currTurrPos = 0
 
-        gameDisplay.fill(white)
+        gameDisplay.fill(black)
+        fading_display()
         obstacles(tank_y)
         tank_x += tank_move
         TurrPos += currTurrPos
