@@ -17,9 +17,8 @@ white = (255, 255, 225)
 black = (0, 0, 0)
 grey = (25, 25, 25)
 red = (255, 0, 0)
-green = (0, 155, 0)
 orange = (255, 100, 0)
-blue = (0, 0, 255)
+blue = (0, 100, 255)
 rand_colour = (random.randrange(0, 256), random.randrange(0, 256), random.randrange(0, 256))
 
 # font types
@@ -58,7 +57,7 @@ def message_to_screen(msg, color, y_displace=0, size="small"):
 def fading_display():
     dy = int((display_height)/255)
     for i in range(130):
-        colour = (0, i, 0)
+        colour = (i, i, i)
         pygame.draw.rect(gameDisplay, colour, (0, int((i*dy)), display_width, display_height - i*dy))
 
 
@@ -109,14 +108,14 @@ def turret_position(x, y, beta):
     x1 = Lx + x
     y1 = y - Ly
 
-    pygame.draw.line(gameDisplay, black, (x, y), (x1, y1), 5)
+    pygame.draw.line(gameDisplay, black, (x, y-5), (x1, y1), 5)
     pygame.display.update()
 
     return x1, y1, beta
 
 
-def fire(x, y, z):
-    x1, y1, beta = turret_position(x, y, z)
+def fire(x, y, beta):
+    x1, y1, beta = turret_position(x, y, beta)
     t = 0
 
     alfa = (beta / 180) * math.pi
@@ -141,16 +140,23 @@ def fire(x, y, z):
                     pygame.quit()
                     quit()
 
-        t += (1 / 100)
+        t += (1 / 2)
         x2 = int(x1 + Vx * t)
         y2 = int(y1 - Vy * t + ((a * (t ** 2)) / 2))
-        pygame.draw.circle(gameDisplay, black, (x2, y2), 1)
+
+        pygame.draw.circle(gameDisplay, blue, (x2, y2), 5)
         pygame.display.update()
         if x2 > display_width or x2 < 0:
             fireShot = False
-        if y2 > int(y + tank_hight + (wheel_radius / 2)):
+        if y2 >= int(y + tank_hight + (wheel_radius / 2)):
             pygame.time.delay(0)
             fireShot = False
+
+        gameDisplay.fill(black)
+        fading_display()
+        obstacles(y)
+        tank(x, y)
+        turret_position(x, y, beta)
 
 
 def obstacles(y):
@@ -163,7 +169,8 @@ def obstacles(y):
 
 def game_intro():
     gameDisplay.fill(black)
-    message_to_screen("Welcome to TANKS!", green, -100, 'large')
+    fading_display()
+    message_to_screen("Welcome to TANKS!", black, -100, 'large')
     message_to_screen("Press S to start, P to pause or Q to quit", white, 100)
     pygame.display.update()
 
