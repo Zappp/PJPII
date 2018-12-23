@@ -152,7 +152,7 @@ def fire(x, y, beta):
 
         pygame.draw.circle(gameDisplay, blue, (x2, y2), 5)
         pygame.display.update()
-        gameDisplay.fill(white)
+        gameDisplay.fill(black)
         fading_display()
         obstacles(y)
         tank(x, y)
