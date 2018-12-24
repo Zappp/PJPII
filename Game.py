@@ -36,6 +36,10 @@ turret_width = 4
 # obstacles
 wall_thickness = display_width * 0.05
 wall_hight = display_height * 0.4
+wall_x_pos = int((display_width / 2) - (wall_thickness / 2))
+wall_y_pos = int(display_height - wall_hight - (display_height - (display_height * 0.9) - tank_hight - (wheel_radius / 2)))
+floor_y_pos = int((display_height * 0.9) + tank_hight + (wheel_radius / 2))
+floor_thickness = int(display_height - ((display_height * 0.9) + tank_hight + (wheel_radius / 2)))
 
 
 def text_objects(text, color, size="small"):
@@ -49,9 +53,9 @@ def text_objects(text, color, size="small"):
     return textSurface, textSurface.get_rect()
 
 
-def message_to_screen(msg, color, y_displace=0, size="small"):
+def message_to_screen(msg, color, y_displace=0, size="small", x_displace=0):
     textSurf, textRect = text_objects(msg, color, size)
-    textRect.center = (int(display_width / 2), int(display_height / 2) + y_displace)
+    textRect.center = (int(display_width / 2) + x_displace, int(display_height / 2) + y_displace)
     gameDisplay.blit(textSurf, textRect)
 
 
@@ -83,6 +87,21 @@ def pause():
                     quit()
 
 
+def obstacles():
+    pygame.draw.rect(gameDisplay, grey, (0, floor_y_pos, display_width, wall_thickness))  #floor
+    pygame.draw.rect(gameDisplay, grey, (wall_x_pos, wall_y_pos, wall_thickness, wall_hight)) #wall
+
+
+def health_points1():
+    message_to_screen("player 1", white, -280, "small", -300)
+    pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.05), int(display_height * 0.08), 200, 5))
+
+
+def health_points2():
+    message_to_screen("player 2", white, -280, "small", 300)
+    pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.72), int(display_height * 0.08), 200, 5))
+
+
 def tank1(x, y):
     pygame.draw.circle(gameDisplay, black, (x, y), int(tank_hight / 2))
     pygame.draw.rect(gameDisplay, black, (int(x - (tank_width / 2)), y, tank_width, tank_hight))
@@ -90,8 +109,6 @@ def tank1(x, y):
         pygame.draw.circle(gameDisplay, black,
                            (int((x - (tank_width / 2)) + 2 * wheel_radius * i), y + tank_hight),
                            wheel_radius)
-
-    pygame.display.update()
 
 
 def tank2(x, y):
@@ -101,8 +118,6 @@ def tank2(x, y):
         pygame.draw.circle(gameDisplay, black,
                            (int((x - (tank_width / 2)) + 2 * wheel_radius * i), y + tank_hight),
                            wheel_radius)
-
-    pygame.display.update()
 
 
 def turret_position(x, y, beta):
@@ -114,7 +129,6 @@ def turret_position(x, y, beta):
     y1 = y - Ly
 
     pygame.draw.line(gameDisplay, black, (x, y), (x1, y1), 5)
-    pygame.display.update()
 
     return x1, y1, beta
 
@@ -156,20 +170,14 @@ def fire(x, y, z, beta, gamma):
 
         gameDisplay.blit(theme, (0, 0))
         pygame.draw.circle(gameDisplay, blue, (x2, y2), 5)
-        obstacles(y)
+        health_points1()
+        health_points2()
+        obstacles()
         tank1(x, y)
         turret_position(x, y, beta)
         tank2(z, y)
         turret_position(z, y, gamma)
         pygame.display.update()
-
-
-def obstacles(y):
-    pygame.draw.rect(gameDisplay, grey, (0, int(y + tank_hight + (wheel_radius / 2)), display_width,
-                                         int(display_height - (y + tank_hight + (wheel_radius / 2)))))
-    pygame.draw.rect(gameDisplay, grey, (int((display_width / 2) - (wall_thickness / 2)), int(
-        display_height - wall_hight - (display_height - y - tank_hight - (wheel_radius / 2))), wall_thickness,
-                                         wall_hight))
 
 
 def game_intro():
@@ -250,6 +258,13 @@ def game_loop():
                 if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     currTurrPos = 0
 
+        if turn % 2 == 0:
+            tank1_x += tank_move
+            TurrPos1 += currTurrPos
+        else:
+            tank2_x += tank_move
+            TurrPos2 -= currTurrPos
+
         if TurrPos1 >= 180:
             TurrPos1 = 180
         elif TurrPos1 <= 0:
@@ -268,16 +283,10 @@ def game_loop():
         elif tank2_x >= int(display_width - (tank_width / 2)):
             tank2_x = int(display_width - (tank_width / 2))
 
-        if turn % 2 == 0:
-            tank1_x += tank_move
-            TurrPos1 += currTurrPos
-
-        else:
-            tank2_x += tank_move
-            TurrPos2 -= currTurrPos
-
         gameDisplay.blit(theme, (0, 0))
-        obstacles(tank_y)
+        health_points1()
+        health_points2()
+        obstacles()
         tank1(tank1_x, tank_y)
         turret_position(tank1_x, tank_y, TurrPos1)
         tank2(tank2_x, tank_y)
