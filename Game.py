@@ -37,7 +37,8 @@ turret_width = 4
 wall_thickness = display_width * 0.05
 wall_hight = display_height * 0.4
 wall_x_pos = int((display_width / 2) - (wall_thickness / 2))
-wall_y_pos = int(display_height - wall_hight - (display_height - (display_height * 0.9) - tank_hight - (wheel_radius / 2)))
+wall_y_pos = int(
+    display_height - wall_hight - (display_height - (display_height * 0.9) - tank_hight - (wheel_radius / 2)))
 floor_y_pos = int((display_height * 0.9) + tank_hight + (wheel_radius / 2))
 floor_thickness = int(display_height - ((display_height * 0.9) + tank_hight + (wheel_radius / 2)))
 
@@ -88,17 +89,15 @@ def pause():
 
 
 def obstacles():
-    pygame.draw.rect(gameDisplay, grey, (0, floor_y_pos, display_width, wall_thickness))  #floor
-    pygame.draw.rect(gameDisplay, grey, (wall_x_pos, wall_y_pos, wall_thickness, wall_hight)) #wall
+    pygame.draw.rect(gameDisplay, grey, (0, floor_y_pos, display_width, wall_thickness))  # floor
+    pygame.draw.rect(gameDisplay, grey, (wall_x_pos, wall_y_pos, wall_thickness, wall_hight))  # wall
 
 
-def health_points1(x = 0):
-    message_to_screen("player 1", white, -280, "small", -300)
+def health_points1(x=0):
     pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.05), int(display_height * 0.08), 200 - x, 5))
 
 
-def health_points2(x = 0):
-    message_to_screen("player 2", white, -280, "small", 300)
+def health_points2(x=0):
     pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.72), int(display_height * 0.08), 200 - x, 5))
 
 
@@ -163,17 +162,24 @@ def fire(x, y, z, beta, gamma):
         y2 = int(y1 - Vy * t + ((a * (t ** 2)) / 2))
         t += (0.2)
 
-        if x2 > display_width or x2 < 0:
-            fireShot = False
-        if y2 >= int(y + tank_hight + (wheel_radius / 2)):
-            fireShot = False #explosion needed
-        if x2 > wall_x_pos and x2 < wall_x_pos + wall_thickness and y2 > wall_y_pos:
-            fireShot = False #explosion needed
-        if x2 < abs(z + 20) and y2 > y - 10:
-            fireShot = False #explosion needed
-
         gameDisplay.blit(theme, (0, 0))
         pygame.draw.circle(gameDisplay, blue, (x2, y2), 6)
+
+        if x2 > display_width or x2 < 0:
+            fireShot = False
+        if y2 >= int(y + tank_hight + (wheel_radius / 2) - 10):
+            explosion(x, y, z, beta, gamma, x2, y2)
+            fireShot = False
+        if x2 >= wall_x_pos and x2 <= wall_x_pos + wall_thickness and y2 >= wall_y_pos - 10:
+            explosion(x, y, z, beta, gamma, x2, y2)
+            fireShot = False
+        if x2 < z + 20 and x2 > z - 20 and y2 > y - 10: #can add self hit cond
+            explosion(x, y, z, beta, gamma, x2, y2)
+            fireShot = False
+
+
+        message_to_screen("player 2", white, -280, "small", 300)
+        message_to_screen("player 1", white, -280, "small", -300)
         health_points1()
         health_points2()
         obstacles()
@@ -181,8 +187,45 @@ def fire(x, y, z, beta, gamma):
         turret_position(x, y, beta)
         tank2(z, y)
         turret_position(z, y, gamma)
-        pygame.draw.rect(gameDisplay, red, (z - 20, y - 7, 40, 30)) #hitbox test
+        pygame.draw.rect(gameDisplay, red, (z - 20, y - 7, 40, 30))  # hitbox test
         pygame.display.update()
+
+
+def explosion(x, y, z, beta, gamma, x2, y2):
+    explosion = True
+    R1 = 20
+    R2 = 2
+    R3 = 1
+
+    while explosion:
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+        R1 += 1
+        R2 += 2
+        R3 += 2
+
+
+        if (R1 or R2 or R3) >= 40:
+            explosion = False
+
+        message_to_screen("player 2", white, -280, "small", 300)
+        message_to_screen("player 1", white, -280, "small", -300)
+        health_points1()
+        health_points2()
+        obstacles()
+        pygame.draw.circle(gameDisplay, black, (x2, y2), R1)
+        pygame.draw.circle(gameDisplay, blue, (x2, y2), R2)
+        pygame.draw.circle(gameDisplay, black, (x2, y2), R3)
+        tank1(x, y)
+        turret_position(x, y, beta)
+        tank2(z, y)
+        turret_position(z, y, gamma)
+        pygame.display.update()
+        clock.tick(30)
 
 
 def game_intro():
@@ -198,6 +241,7 @@ def game_intro():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     intro = False
@@ -289,6 +333,8 @@ def game_loop():
             tank2_x = int(display_width - (tank_width / 2))
 
         gameDisplay.blit(theme, (0, 0))
+        message_to_screen("player 2", white, -280, "small", 300)
+        message_to_screen("player 1", white, -280, "small", -300)
         health_points1()
         health_points2()
         obstacles()
