@@ -93,12 +93,16 @@ def obstacles():
     pygame.draw.rect(gameDisplay, grey, (wall_x_pos, wall_y_pos, wall_thickness, wall_hight))  # wall
 
 
-def health_points1(x=0):
-    pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.05), int(display_height * 0.08), 200 - x, 5))
+def health_points1(x = 0):
+    y = 200 - x
+    pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.05), int(display_height * 0.08), y, 5))
+    return y
 
 
-def health_points2(x=0):
-    pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.72), int(display_height * 0.08), 200 - x, 5))
+def health_points2(x = 0):
+    y = 200 - x
+    pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.95 - 200), int(display_height * 0.08), y, 5))
+    return y
 
 
 def tank1(x, y):
@@ -132,7 +136,7 @@ def turret_position(x, y, beta):
     return x1, y1, beta
 
 
-def fire(x, y, z, beta, gamma):
+def fire(x, y, z, beta, gamma, dmg1, dmg2):
     x1, y1, beta = turret_position(x, y, beta)
     t = 0
 
@@ -160,27 +164,37 @@ def fire(x, y, z, beta, gamma):
 
         x2 = int(x1 + Vx * t)
         y2 = int(y1 - Vy * t + ((a * (t ** 2)) / 2))
-        t += (0.2)
+        t += 0.2
 
         gameDisplay.blit(theme, (0, 0))
         pygame.draw.circle(gameDisplay, blue, (x2, y2), 6)
 
         if x2 > display_width or x2 < 0:
             fireShot = False
-        if y2 >= int(y + tank_hight + (wheel_radius / 2) - 10):
-            explosion(x, y, z, beta, gamma, x2, y2)
+        if y2 > floor_y_pos:
+            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
             fireShot = False
-        if x2 >= wall_x_pos and x2 <= wall_x_pos + wall_thickness and y2 >= wall_y_pos - 10:
-            explosion(x, y, z, beta, gamma, x2, y2)
+        if x2 > wall_x_pos and x2 < wall_x_pos + wall_thickness and y2 > wall_y_pos - 10:
+            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
             fireShot = False
-        if x2 < z + 20 and x2 > z - 20 and y2 > y - 10:  # add self hit cond
-            explosion(x, y, z, beta, gamma, x2, y2)
-            return 0
+
+        if x2 <= x + 20 and x2 >= x - 20 and y2 > y:
+            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
+            return 0, print(damage(x, x2))
+        if x2 > x + 20 and x2 < x + 60 and x2 < x - 20 and x2 > x - 60 and y2 >= floor_y_pos:
+            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
+            return 0, print(damage(x, x2))
+        if x2 <= z + 20 and x2 >= z - 20 and y2 > y:
+            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
+            return 1, print(damage(z, x2))
+        if x2 > z + 20 and x2 < z + 60 and x2 < z - 20 and x2 > z - 60:
+            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
+            return 1, print(damage(z, x2))
 
         message_to_screen("player 2", white, -280, "small", 300)
         message_to_screen("player 1", white, -280, "small", -300)
-        health_points1()
-        health_points2()
+        health_points1(dmg1)
+        health_points2(dmg2)
         obstacles()
         tank1(x, y)
         turret_position(x, y, beta)
@@ -190,7 +204,7 @@ def fire(x, y, z, beta, gamma):
         pygame.display.update()
 
 
-def explosion(x, y, z, beta, gamma, x2, y2):
+def explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2):
     explosion = True
     R1 = 20
     R2 = 2
@@ -212,8 +226,8 @@ def explosion(x, y, z, beta, gamma, x2, y2):
 
         message_to_screen("player 2", white, -280, "small", 300)
         message_to_screen("player 1", white, -280, "small", -300)
-        health_points1()
-        health_points2()
+        health_points1(dmg1)
+        health_points2(dmg2)
         obstacles()
         pygame.draw.circle(gameDisplay, black, (x2, y2), R1)
         pygame.draw.circle(gameDisplay, blue, (x2, y2), R2)
@@ -224,6 +238,19 @@ def explosion(x, y, z, beta, gamma, x2, y2):
         turret_position(z, y, gamma)
         pygame.display.update()
         clock.tick(30)
+
+
+def damage(tank_x, x2):
+    distance = abs(tank_x - x2)
+    print(distance)
+
+    if distance > 60:
+        dmg = 0
+    elif distance <= 20:
+        dmg = 50
+    elif distance > 20 and distance <= 60:
+        dmg = int(1000/distance)
+    return dmg
 
 
 def game_intro():
@@ -256,6 +283,8 @@ def game_loop():
 
     TurrPos1 = 60
     TurrPos2 = 120
+    dmg1 = 0
+    dmg2 = 0
     tank_move = 0
     currTurrPos = 0
     turn = 0
@@ -291,13 +320,19 @@ def game_loop():
 
                 elif event.key == pygame.K_SPACE:
                     if turn % 2 == 0:
-                        if fire(tank1_x, tank_y, tank2_x, TurrPos1, TurrPos2) == 0:
-                            health_points2()  # need improvement
-                    else:
-                        if fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1) == 0:
-                            health_points1()  # need improvement
-                    turn += 1
+                        f = fire(tank1_x, tank_y, tank2_x, TurrPos1, TurrPos2, dmg1, dmg2)
+                        if f == 0:
+                            dmg1 += 50
+                        elif f == 1:
+                            dmg2 += 50
 
+                    else:
+                        f = fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1, dmg1, dmg2)
+                        if f == 0:
+                            dmg2 += 50
+                        elif f == 1:
+                            dmg1 += 50
+                    turn += 1
 
             elif event.type == pygame.KEYUP:
 
@@ -322,7 +357,6 @@ def game_loop():
             tank1_x = int(display_width / 2 - wall_thickness / 2 - tank_width / 2)
         elif tank1_x <= int(0 + (tank_width / 2)):
             tank1_x = int(0 + (tank_width / 2))
-
         if TurrPos2 >= 180:
             TurrPos2 = 180
         elif TurrPos2 <= 0:
@@ -332,16 +366,21 @@ def game_loop():
         elif tank2_x >= int(display_width - (tank_width / 2)):
             tank2_x = int(display_width - (tank_width / 2))
 
+        if health_points1(dmg1) <= 1:
+                gameExit = True
+        if health_points2(dmg2) <= 1:
+                gameExit = True
+
         gameDisplay.blit(theme, (0, 0))
         message_to_screen("player 2", white, -280, "small", 300)
         message_to_screen("player 1", white, -280, "small", -300)
-        health_points1()
-        health_points2()
         obstacles()
         tank1(tank1_x, tank_y)
         turret_position(tank1_x, tank_y, TurrPos1)
         tank2(tank2_x, tank_y)
         turret_position(tank2_x, tank_y, TurrPos2)
+        health_points1(dmg1)
+        health_points2(dmg2)
         pygame.display.update()
         clock.tick(30)
 
