@@ -188,7 +188,6 @@ def fire(x, y, z, beta, gamma):
         turret_position(z, y, gamma)
         pygame.draw.rect(gameDisplay, red, (z - 20, y - 7, 40, 30))  # hitbox test
         pygame.display.update()
-    return 1
 
 
 def explosion(x, y, z, beta, gamma, x2, y2):
