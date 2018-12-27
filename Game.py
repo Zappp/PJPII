@@ -173,10 +173,9 @@ def fire(x, y, z, beta, gamma):
         if x2 >= wall_x_pos and x2 <= wall_x_pos + wall_thickness and y2 >= wall_y_pos - 10:
             explosion(x, y, z, beta, gamma, x2, y2)
             fireShot = False
-        if x2 < z + 20 and x2 > z - 20 and y2 > y - 10: #can add self hit cond
+        if x2 < z + 20 and x2 > z - 20 and y2 > y - 10:  # add self hit cond
             explosion(x, y, z, beta, gamma, x2, y2)
-            fireShot = False
-
+            return 0
 
         message_to_screen("player 2", white, -280, "small", 300)
         message_to_screen("player 1", white, -280, "small", -300)
@@ -189,6 +188,7 @@ def fire(x, y, z, beta, gamma):
         turret_position(z, y, gamma)
         pygame.draw.rect(gameDisplay, red, (z - 20, y - 7, 40, 30))  # hitbox test
         pygame.display.update()
+    return 1
 
 
 def explosion(x, y, z, beta, gamma, x2, y2):
@@ -207,7 +207,6 @@ def explosion(x, y, z, beta, gamma, x2, y2):
         R1 += 1
         R2 += 2
         R3 += 2
-
 
         if (R1 or R2 or R3) >= 40:
             explosion = False
@@ -293,9 +292,11 @@ def game_loop():
 
                 elif event.key == pygame.K_SPACE:
                     if turn % 2 == 0:
-                        fire(tank1_x, tank_y, tank2_x, TurrPos1, TurrPos2)
+                        if fire(tank1_x, tank_y, tank2_x, TurrPos1, TurrPos2) == 0:
+                            health_points2()  # need improvement
                     else:
-                        fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1)
+                        if fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1) == 0:
+                            health_points1()  # need improvement
                     turn += 1
 
 
