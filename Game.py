@@ -93,14 +93,18 @@ def obstacles():
     pygame.draw.rect(gameDisplay, grey, (wall_x_pos, wall_y_pos, wall_thickness, wall_hight))  # wall
 
 
-def health_points1(x = 0):
+def health_points1(x=0):
     y = 200 - x
+    if y <= 1:
+        y = 1
     pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.05), int(display_height * 0.08), y, 5))
     return y
 
 
-def health_points2(x = 0):
+def health_points2(x=0):
     y = 200 - x
+    if y <= 1:
+        y = 1
     pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.95 - 200), int(display_height * 0.08), y, 5))
     return y
 
@@ -169,27 +173,34 @@ def fire(x, y, z, beta, gamma, dmg1, dmg2):
         gameDisplay.blit(theme, (0, 0))
         pygame.draw.circle(gameDisplay, blue, (x2, y2), 6)
 
-        if x2 > display_width or x2 < 0:
-            fireShot = False
-        if y2 > floor_y_pos:
+        if x2 > x + 20 and x2 < x + 60 and y2 > y:
+            explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
+            return 0, damage(x, x2)
+        elif x2 < x - 20 and x2 > x - 60 and y2 > y:
+            explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
+            return 0, damage(x, x2)
+        elif x2 <= x + 20 and x2 >= x - 20 and y2 > y and y2 < floor_y_pos:
             explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            fireShot = False
-        if x2 > wall_x_pos and x2 < wall_x_pos + wall_thickness and y2 > wall_y_pos - 10:
-            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            fireShot = False
+            return 0, damage(x, x2)
 
-        if x2 <= x + 20 and x2 >= x - 20 and y2 > y:
+        elif x2 <= z + 20 and x2 >= z - 20 and y2 > y and y2 < floor_y_pos:
             explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            return 0, print(damage(x, x2))
-        if x2 > x + 20 and x2 < x + 60 and x2 < x - 20 and x2 > x - 60 and y2 >= floor_y_pos:
+            return 1, damage(z, x2)
+        elif x2 > z + 20 and x2 < z + 60 and y2 > y:
+            explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
+            return 1, damage(z, x2)
+        elif x2 < z - 20 and x2 > z - 60 and y2 > y:
+            explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
+            return 1, damage(z, x2)
+
+        elif y2 > floor_y_pos:
+            explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
+            return 1, damage(z, x2)
+        elif x2 > display_width or x2 < 0:
+            return 1, damage(z, x2)
+        elif x2 > wall_x_pos and x2 < wall_x_pos + wall_thickness and y2 > wall_y_pos:
             explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            return 0, print(damage(x, x2))
-        if x2 <= z + 20 and x2 >= z - 20 and y2 > y:
-            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            return 1, print(damage(z, x2))
-        if x2 > z + 20 and x2 < z + 60 and x2 < z - 20 and x2 > z - 60:
-            explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            return 1, print(damage(z, x2))
+            return 0, damage(x, x2)
 
         message_to_screen("player 2", white, -280, "small", 300)
         message_to_screen("player 1", white, -280, "small", -300)
@@ -200,15 +211,15 @@ def fire(x, y, z, beta, gamma, dmg1, dmg2):
         turret_position(x, y, beta)
         tank2(z, y)
         turret_position(z, y, gamma)
-        pygame.draw.rect(gameDisplay, red, (z - 20, y - 7, 40, 30))  # hitbox test
         pygame.display.update()
 
 
 def explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2):
-    explosion = True
     R1 = 20
     R2 = 2
     R3 = 1
+
+    explosion = True
 
     while explosion:
         for event in pygame.event.get():
@@ -216,7 +227,6 @@ def explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-
         R1 += 1
         R2 += 2
         R3 += 2
@@ -240,16 +250,16 @@ def explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2):
         clock.tick(30)
 
 
-def damage(tank_x, x2):
+def damage(tank_x, x2):  ## need to add tank_y, y2 cond (wall bug)
     distance = abs(tank_x - x2)
-    print(distance)
 
     if distance > 60:
-        dmg = 0
+        dmg_ = 0
+    elif distance <= 60 and distance > 20:
+        dmg_ = int(1000 / distance)
     elif distance <= 20:
-        dmg = 50
-    elif distance > 20 and distance <= 60:
-        dmg = int(1000/distance)
+        dmg_ = 50
+    dmg = 2 * dmg_
     return dmg
 
 
@@ -320,18 +330,18 @@ def game_loop():
 
                 elif event.key == pygame.K_SPACE:
                     if turn % 2 == 0:
-                        f = fire(tank1_x, tank_y, tank2_x, TurrPos1, TurrPos2, dmg1, dmg2)
+                        f, d = fire(tank1_x, tank_y, tank2_x, TurrPos1, TurrPos2, dmg1, dmg2)
                         if f == 0:
-                            dmg1 += 50
+                            dmg1 += d
                         elif f == 1:
-                            dmg2 += 50
+                            dmg2 += d
 
                     else:
-                        f = fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1, dmg1, dmg2)
+                        f, dmg = fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1, dmg1, dmg2)
                         if f == 0:
-                            dmg2 += 50
+                            dmg2 += dmg
                         elif f == 1:
-                            dmg1 += 50
+                            dmg1 += dmg
                     turn += 1
 
             elif event.type == pygame.KEYUP:
@@ -367,9 +377,9 @@ def game_loop():
             tank2_x = int(display_width - (tank_width / 2))
 
         if health_points1(dmg1) <= 1:
-                gameExit = True
+            gameExit = True
         if health_points2(dmg2) <= 1:
-                gameExit = True
+            gameExit = True
 
         gameDisplay.blit(theme, (0, 0))
         message_to_screen("player 2", white, -280, "small", 300)
