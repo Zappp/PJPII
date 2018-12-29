@@ -175,32 +175,32 @@ def fire(x, y, z, beta, gamma, dmg1, dmg2):
 
         if x2 > x + 20 and x2 < x + 60 and y2 > y:
             explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
-            return 0, damage(x, x2)
+            return 0, damage(x, y, x2, y2)
         elif x2 < x - 20 and x2 > x - 60 and y2 > y:
             explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
-            return 0, damage(x, x2)
+            return 0, damage(x, y, x2, y2)
         elif x2 <= x + 20 and x2 >= x - 20 and y2 > y and y2 < floor_y_pos:
             explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            return 0, damage(x, x2)
+            return 0, damage(x, y, x2, y2)
 
         elif x2 <= z + 20 and x2 >= z - 20 and y2 > y and y2 < floor_y_pos:
             explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            return 1, damage(z, x2)
+            return 1, damage(z, y, x2, y2)
         elif x2 > z + 20 and x2 < z + 60 and y2 > y:
             explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
-            return 1, damage(z, x2)
+            return 1, damage(z, y, x2, y2)
         elif x2 < z - 20 and x2 > z - 60 and y2 > y:
             explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
-            return 1, damage(z, x2)
+            return 1, damage(z, y, x2, y2)
 
         elif y2 > floor_y_pos:
             explosion(x, y, z, beta, gamma, x2, floor_y_pos, dmg1, dmg2)
-            return 1, damage(z, x2)
+            return 1, damage(z, y, x2, y2)
         elif x2 > display_width or x2 < 0:
-            return 1, damage(z, x2)
+            return 1, damage(z, y, x2, y2)
         elif x2 > wall_x_pos and x2 < wall_x_pos + wall_thickness and y2 > wall_y_pos:
             explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2)
-            return 0, damage(x, x2)
+            return 0, damage(x, y, x2, y2)
 
         message_to_screen("player 2", white, -280, "small", 300)
         message_to_screen("player 1", white, -280, "small", -300)
@@ -250,16 +250,17 @@ def explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2):
         clock.tick(30)
 
 
-def damage(tank_x, x2):  ## need to add tank_y, y2 cond (wall bug)
-    distance = abs(tank_x - x2)
-
-    if distance > 60:
-        dmg_ = 0
-    elif distance <= 60 and distance > 20:
-        dmg_ = int(1000 / distance)
-    elif distance <= 20:
+def damage(tank_x, tank_y, x2, y2):
+    distance_x = abs(tank_x - x2)
+    distance_y = abs(tank_y - y2)
+    dmg_ = 0
+    if distance_x > 60 or distance_y > 40:
+        pass
+    elif distance_x <= 60 and distance_x > 20:
+        dmg_ = int(1000 / distance_x)
+    elif distance_x <= 20:
         dmg_ = 50
-    dmg = 2 * dmg_
+    dmg = int(3/2 * dmg_)
     return dmg
 
 
