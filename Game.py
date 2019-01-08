@@ -19,7 +19,7 @@ black = (0, 0, 0)
 grey = (25, 25, 25)
 red = (255, 0, 0)
 orange = (255, 100, 0)
-blue = (0, 100, 255)
+blue = (0, 130, 255)
 rand_colour = (random.randrange(0, 256), random.randrange(0, 256), random.randrange(0, 256))
 
 # font types
@@ -65,8 +65,8 @@ def pause():
 
     while gamePaused:
         gameDisplay.blit(theme, (0, 0))
-        message_to_screen("GAME PAUSED", orange, -100, "large")
-        message_to_screen("Press C to continue or Q to quit", black, 100, "small")
+        message_to_screen("GAME PAUSED", black, -100, "large")
+        message_to_screen("Press C to continue or Q to quit", white, 100, "small")
         pygame.display.update()
 
         for event in pygame.event.get():
@@ -88,6 +88,32 @@ def pause():
                     quit()
 
 
+def game_over(x):
+    msg = f'Player {x} wins!'
+    gameOver = True
+
+    while gameOver:
+        gameDisplay.blit(theme, (0, 0))
+        message_to_screen(msg, black, -100, "large")
+        message_to_screen("Press C to play again Q to quit", white, 100, "small")
+        pygame.display.update()
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+            if event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_c:
+                    game_loop()
+
+                if event.key == pygame.K_q:
+                    pygame.quit()
+                    quit()
+
+
 def obstacles():
     pygame.draw.rect(gameDisplay, grey, (0, floor_y_pos, display_width, wall_thickness))  # floor
     pygame.draw.rect(gameDisplay, grey, (wall_x_pos, wall_y_pos, wall_thickness, wall_hight))  # wall
@@ -101,8 +127,8 @@ def health_points1(x=0):
     return y
 
 
-def health_points2(x=0):
-    y = 200 - x
+def health_points2(dmg=0):
+    y = 200 - dmg
     if y <= 1:
         y = 1
     pygame.draw.rect(gameDisplay, blue, (int(display_width * 0.95 - 200), int(display_height * 0.08), y, 5))
@@ -211,6 +237,12 @@ def fire(x, y, z, beta, gamma, dmg1, dmg2):
         turret_position(x, y, beta)
         tank2(z, y)
         turret_position(z, y, gamma)
+        z1 = int((200 - dmg1)/200 * 100)
+        z1_ = f'{z1}% HP'
+        message_to_screen(z1_, white, -220, "small", -300)
+        z2 = int((200 - dmg2)/200 * 100)
+        z2_ = f'{z2}% HP'
+        message_to_screen(z2_, white, -220, "small", 300)
         pygame.display.update()
 
 
@@ -246,6 +278,12 @@ def explosion(x, y, z, beta, gamma, x2, y2, dmg1, dmg2):
         turret_position(x, y, beta)
         tank2(z, y)
         turret_position(z, y, gamma)
+        z1 = int((200 - dmg1)/200 * 100)
+        z1_ = f'{z1}% HP'
+        message_to_screen(z1_, white, -220, "small", -300)
+        z2 = int((200 - dmg2)/200 * 100)
+        z2_ = f'{z2}% HP'
+        message_to_screen(z2_, white, -220, "small", 300)
         pygame.display.update()
         clock.tick(30)
 
@@ -260,7 +298,7 @@ def damage(tank_x, tank_y, x2, y2):
         dmg_ = int(1000 / distance_x)
     elif distance_x <= 20:
         dmg_ = 50
-    dmg = int(3/2 * dmg_)
+    dmg = int(3 / 2 * dmg_)
     return dmg
 
 
@@ -300,9 +338,13 @@ def game_loop():
     currTurrPos = 0
     turn = 0
 
+    a = 0
+    b = 0
+
     gameExit = False
 
     while not gameExit:
+
 
         for event in pygame.event.get():
 
@@ -338,11 +380,14 @@ def game_loop():
                             dmg2 += d
 
                     else:
-                        f, dmg = fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1, dmg1, dmg2)
+                        f, d = fire(tank2_x, tank_y, tank1_x, TurrPos2, TurrPos1, dmg1, dmg2)
                         if f == 0:
-                            dmg2 += dmg
+                            dmg2 += d
+                            b = 20
+
                         elif f == 1:
-                            dmg1 += dmg
+                            dmg1 += d
+                            a = 20
                     turn += 1
 
             elif event.type == pygame.KEYUP:
@@ -378,9 +423,10 @@ def game_loop():
             tank2_x = int(display_width - (tank_width / 2))
 
         if health_points1(dmg1) <= 1:
-            gameExit = True
+            game_over(2)
         if health_points2(dmg2) <= 1:
-            gameExit = True
+            game_over(1)
+
 
         gameDisplay.blit(theme, (0, 0))
         message_to_screen("player 2", white, -280, "small", 300)
@@ -392,6 +438,12 @@ def game_loop():
         turret_position(tank2_x, tank_y, TurrPos2)
         health_points1(dmg1)
         health_points2(dmg2)
+        z1 = int((200 - dmg1)/200 * 100)
+        z1_ = f'{z1}% HP'
+        message_to_screen(z1_, white, -220, "small", -300)
+        z2 = int((200 - dmg2)/200 * 100)
+        z2_ = f'{z2}% HP'
+        message_to_screen(z2_, white, -220, "small", 300)
         pygame.display.update()
         clock.tick(30)
 
